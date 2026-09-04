@@ -10,7 +10,9 @@ const generateToken = (id) => {
 const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    // sameSite 'none' required for cross-domain cookies (Vercel frontend → Render backend)
+    // 'lax' is fine for local dev (same-origin via Vite proxy)
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 

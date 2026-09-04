@@ -21,21 +21,25 @@ const app = express();
 
 connectDB();
 
-// CORS — allow local dev + production frontend URL(s)
+// CORS — allow local dev + any CLIENT_URL values (comma-separated) + hardcoded Vercel URL
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
-    process.env.CLIENT_URL
+    'https://fra-app.vercel.app',  // hardcoded production frontend
+    // Also support any CLIENT_URL env var (comma-separated for multiple URLs)
+    ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(u => u.trim()) : [])
 ].filter(Boolean);
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            // Allow requests with no origin (Postman, server-to-server)
+            // Allow requests with no origin (mobile apps, Postman, Render shell)
             if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true);
             } else {
-                callback(new Error(`CORS: origin ${origin} not allowed`));
+                // In production, log but don't crash — deny gracefully
+                console.warn(`CORS blocked: ${origin}`);
+                callback(null, false);
             }
         },
         credentials: true
