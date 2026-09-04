@@ -8,26 +8,38 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        // Check if we have a stored token and verify it
+        const token = localStorage.getItem('fra_token')
+        if (!token) {
+            setLoading(false)
+            return
+        }
         api.get('/auth/me')
             .then(res => setUser(res.data))
-            .catch(() => setUser(null))
+            .catch(() => {
+                localStorage.removeItem('fra_token')
+                setUser(null)
+            })
             .finally(() => setLoading(false))
     }, [])
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password })
-        setUser(res.data)
-        return res.data
+        const { token, ...userData } = res.data
+        // Store token in localStorage for cross-domain use
+        if (token) localStorage.setItem('fra_token', token)
+        setUser(userData)
+        return userData
     }
 
     const register = async (data) => {
         const res = await api.post('/auth/register', data)
-        setUser(res.data)
         return res.data
     }
 
     const logout = async () => {
-        await api.post('/auth/logout')
+        try { await api.post('/auth/logout') } catch (_) { /* ignore */ }
+        localStorage.removeItem('fra_token')
         setUser(null)
     }
 

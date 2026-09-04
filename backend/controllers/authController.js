@@ -93,7 +93,9 @@ const login = async (req, res, next) => {
             description: `User ${user.name} logged in`
         });
 
+        // Return token in body too (for cross-domain deployments where cookie can't be sent)
         res.json({
+            token,
             _id: user._id,
             name: user.name,
             email: user.email,

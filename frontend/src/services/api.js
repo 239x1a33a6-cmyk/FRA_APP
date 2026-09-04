@@ -12,6 +12,16 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
+// Request interceptor — attach stored JWT token as Authorization header
+// This ensures requests work cross-domain (Vercel → Render) where cookies may be blocked
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('fra_token')
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`
+  }
+  return config
+})
+
 // Response interceptor — redirect to login on 401 (except /auth/me which is the initial check)
 api.interceptors.response.use(
   (res) => res,
@@ -19,6 +29,7 @@ api.interceptors.response.use(
     const url = err.config?.url || ''
     // Don't redirect for the auth check itself — AuthContext handles that gracefully
     if (err.response?.status === 401 && !url.includes('/auth/me')) {
+      localStorage.removeItem('fra_token')
       window.location.href = '/login'
     }
     return Promise.reject(err)
