@@ -21,9 +21,23 @@ const app = express();
 
 connectDB();
 
+// CORS — allow local dev + production frontend URL(s)
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: process.env.CLIENT_URL,
+        origin: (origin, callback) => {
+            // Allow requests with no origin (Postman, server-to-server)
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error(`CORS: origin ${origin} not allowed`));
+            }
+        },
         credentials: true
     })
 );
